@@ -1,0 +1,22 @@
+module.exports = {
+    chatLogUrl: '',
+    assistantConfigs: [
+        {
+            name: '',
+            pattern: '',
+            apikey: '',
+            workspaceId: '',
+            url: ''
+        }
+    ],
+    cloudant: {
+        dbName: '',
+        username: '',
+        password: '',
+    },
+    defaultButtons: {
+        service: [''],
+        sale: [''],
+        other: ['']
+    }
+}
