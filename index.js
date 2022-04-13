@@ -2,7 +2,7 @@
 const axios = require('axios');
 const https = require('https');
 
-let { chatLogUrl, assistantConfigs, cloudant, defaultButtons } = require('./configs');
+let { chatLogUrl, assistantConfigs, cloudant, defaultButtons, constantButtons } = require('./configs');
 let targetNodeLogs, newButtons;
 let startTime = new Date(new Date().toDateString()).getTime() - 7*24*60*60*1000
 let endTime = new Date(new Date().toDateString()).getTime();
@@ -100,6 +100,14 @@ getChatLogs().then(logs => {
     }
 
     logger.log('各類不滿四個項目回填預設值，結果如下 : ', newButtons);
+    
+    // 填上最優先的基礎按鈕
+    newButtons.service = constantButtons.service.map(btn => btn ? btn : getTextButton(newButtons.service.shift()))
+    newButtons.sale = constantButtons.sale.map(btn => btn ? btn : getTextButton(newButtons.sale.shift()))
+    newButtons.other = constantButtons.other.map(btn => btn ? btn : getTextButton(newButtons.other.shift()))
+
+    logger.log('以基礎按鈕優先，加上新按紐結果如下 : ', newButtons);
+
     logger.log('開始撈取答案包文件');
 
     return axios({
@@ -132,18 +140,17 @@ getChatLogs().then(logs => {
     let { messages: [ menu ] } = doc;
 
     // sale
-    menu.template.columns[1].actions
-        = newButtons.sale.map(text => { return { 'label': text, 'type': 'message', 'text': text } });
+    menu.template.columns[1].actions = newButtons.sale;
     // service
-    menu.template.columns[2].actions
-        = newButtons.service.map(text => { return { 'label': text, 'type': 'message', 'text': text } });
+    menu.template.columns[2].actions = newButtons.service;
     // other
-    menu.template.columns[3].actions
-        = newButtons.other.map(text => { return { 'label': text, 'type': 'message', 'text': text } });
+    menu.template.columns[3].actions = newButtons.other;
 
     logger.log('生成新答案包文件', doc);
     logger.log('開始寫回答案包文件');
     
+    // return;
+
     return axios({
         url: `https://${cloudant.username}:${cloudant.password}@${cloudant.username}.cloudant.com/${cloudant.dbName}/${ id }`,
         method: 'PUT',
@@ -213,4 +220,6 @@ function getDialogNodes(config) {
     })
 }
 
-
+function getTextButton(text) {
+    return { 'label': text, 'type': 'message', 'text': text }
+}
